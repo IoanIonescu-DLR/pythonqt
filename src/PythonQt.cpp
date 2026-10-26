@@ -1520,10 +1520,8 @@ PythonQtPrivate::PythonQtPrivate()
 void PythonQtPrivate::setupSharedLibrarySuffixes()
 {
   _sharedLibrarySuffixes.clear();
-  PythonQtObjectPtr imp;
-  imp.setNewRef(PyImport_ImportModule("imp"));
-  int cExtensionCode = imp.getVariable("C_EXTENSION").toInt();
-  QVariant result = imp.call("get_suffixes");
+  PythonQtObjectPtr machinery;
+  machinery.setNewRef(PyImport_ImportModule("importlib.machinery"));
 #ifdef __linux
   #ifdef _DEBUG
   // First look for shared libraries with the '_d' suffix in debug mode on Linux.
@@ -1532,16 +1530,7 @@ void PythonQtPrivate::setupSharedLibrarySuffixes()
   _sharedLibrarySuffixes << "_d.so";
   #endif
 #endif
-  const QVariantList entries = result.toList();
-  for (const QVariant& entry : entries) {
-    QVariantList suffixEntry = entry.toList();
-    if (suffixEntry.count() == 3) {
-      int code = suffixEntry.at(2).toInt();
-      if (code == cExtensionCode) {
-        _sharedLibrarySuffixes << suffixEntry.at(0).toString();
-      }
-    }
-  }
+  _sharedLibrarySuffixes << machinery.getVariable("EXTENSION_SUFFIXES").toStringList();
 }
 
 PythonQtClassInfo* PythonQtPrivate::currentClassInfoForClassWrapperCreation()
